@@ -1,0 +1,51 @@
+{
+  "name": "nip06-electron",
+  "version": "0.0.1-alpha-1",
+  "main": "dist-electron/main/index.js",
+  "description": "NIP06 | electron",
+  "author": "qlrd <106913782+qlrd@users.noreply.github.com>",
+  "license": "MIT",
+  "private": true,
+  "keywords": [
+    "electron",
+    "rollup",
+    "vite",
+    "vue3",
+    "vue",
+    "nostr",
+    "nostr-tools",
+    "nip",
+    "nip06"
+  ],
+  "debug": {
+    "env": {
+      "VITE_DEV_SERVER_URL": "http://127.0.0.1:3344/"
+    }
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build && electron-builder",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.1.0",
+    "electron": "^23.1.0",
+    "electron-builder": "^23.6.0",
+    "typescript": "^5.0.2",
+    "vite": "^4.1.4",
+    "vite-plugin-electron": "^0.11.2",
+    "vite-plugin-electron-renderer": "^0.14.1",
+    "vue": "^3.2.47",
+    "vue-tsc": "^1.2.0"
+  },
+  "dependencies": {
+    "@types/secp256k1": "^4.0.3",
+    "bech32": "^2.0.0",
+    "bech32-converting": "^1.0.9",
+    "nostr-tools": "^1.10.1",
+    "qrcode.vue": "^3.4.0",
+    "secp256k1": "^5.0.0",
+    "vite-plugin-vuetify": "^1.0.2",
+    "vuetify": "^3.2.2"
+  }
+}
