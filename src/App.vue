@@ -12,11 +12,11 @@
           {{ error.message }}
         </v-card-item>
         <v-card-actions>
-          <v-btn variant="outlined" block @click="closeDialog">Close</v-btn>
+          <v-btn variant="tonal" block @click="closeDialog">Close</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-card variant="outlined">
+    <v-card variant="tonal">
       <v-card-title>
         NIP-06 | Electron
       </v-card-title>
@@ -29,14 +29,14 @@
       <v-card-item row wrap>
         <v-btn
           @click.prevent="generateRandomSeed"
-          variant="outlined"
+          variant="tonal"
         >
           Generate random mnemonic
         </v-btn>
         <v-btn
           v-if="isFilled"
           @click.prevent="reset"
-          variant="outlined"
+          variant="tonal"
         >
           Reset
         </v-btn>
@@ -80,7 +80,7 @@
             <v-col col="6" sm="6" class="pa-1">
               <v-btn
                 @click.prevent="createHexFormat"
-                variant="outlined"
+                variant="tonal"
               > 
                 Hex Format
               </v-btn>
@@ -102,28 +102,40 @@
                   <v-card-item align="center" justify="center">
                     <v-row no-gutters>
                       <v-col col="6" sm="6" class="pa-12">
-                        Private Key
-                        <QrcodeVue
-                          :value="format.hex.prv"
-                          :size="qrcode.size"
-                          :level="qrcode.level"
-                          :render-as="qrcode.renderAs"
-                          :margin="qrcode.margin"
-                          :background="qrcode.background"
-                          :foreground="qrcode.foreground"
-                        />
+                        <v-card variant="tonal">
+                          <v-card-subtitle>
+                            Private Key
+                          </v-card-subtitle>
+                          <v-card-item>
+                            <QrcodeVue
+                              :value="format.hex.prv"
+                              :size="qrcode.size"
+                              :level="qrcode.level"
+                              :render-as="qrcode.renderAs"
+                              :margin="qrcode.margin"
+                              :background="qrcode.background"
+                              :foreground="qrcode.foreground"
+                            />
+                          </v-card-item>
+                        </v-card>
                       </v-col>
                       <v-col col="6" sm="6" class="pa-12">
-                        Public Key 
-                        <QrcodeVue
-                          :value="format.hex.pub"
-                          :size="qrcode.size"
-                          :level="qrcode.level"
-                          :render-as="qrcode.renderAs"
-                          :margin="qrcode.margin"
-                          :background="qrcode.background"
-                          :foreground="qrcode.foreground"
-                        />
+                        <v-card variant="tonal">
+                          <v-card-subtitle>
+                            Public Key
+                          </v-card-subtitle>
+                          <v-card-item>
+                            <QrcodeVue
+                              :value="format.hex.pub"
+                              :size="qrcode.size"
+                              :level="qrcode.level"
+                              :render-as="qrcode.renderAs"
+                              :margin="qrcode.margin"
+                              :background="qrcode.background"
+                              :foreground="qrcode.foreground"
+                            />
+                          </v-card-item>
+                        </v-card>
                       </v-col>
                     </v-row>
                     <v-row no-gutters>
@@ -153,7 +165,7 @@
             <v-col col="6" sm="6" class="pa-1">  
               <v-btn
                 @click.prevent="createBech32Format"
-                variant="outlined"
+                variant="tonal"
               > 
                 Bech32 Format
               </v-btn>
@@ -175,28 +187,40 @@
                   <v-card-item>
                     <v-row no-gutters>
                       <v-col col="6" sm="6" class="pa-12">
-                        Private Key
-                        <QrcodeVue
-                          :value="format.bech32.prv"
-                          :size="qrcode.size"
-                          :level="qrcode.level"
-                          :render-as="qrcode.renderAs"
-                          :margin="qrcode.margin"
-                          :background="qrcode.background"
-                          :foreground="qrcode.foreground"
-                        />
+                        <v-card variant="tonal">
+                          <v-card-subtitle>
+                            Private Key
+                          </v-card-subtitle>
+                          <v-card-item>
+                            <QrcodeVue
+                              :value="format.bech32.prv"
+                              :size="qrcode.size"
+                              :level="qrcode.level"
+                              :render-as="qrcode.renderAs"
+                              :margin="qrcode.margin"
+                              :background="qrcode.background"
+                              :foreground="qrcode.foreground"
+                            />
+                          </v-card-item>
+                        </v-card>
                       </v-col>
                       <v-col col="6" sm="6" class="pa-12">
-                        Public Key 
-                        <QrcodeVue
-                          :value="format.bech32.pub"
-                          :size="qrcode.size"
-                          :level="qrcode.level"
-                          :render-as="qrcode.renderAs"
-                          :margin="qrcode.margin"
-                          :background="qrcode.background"
-                          :foreground="qrcode.foreground"
-                        />
+                        <v-card variant="tonal">
+                          <v-card-subtitle>
+                            Public Key
+                          </v-card-subtitle>
+                          <v-card-item>
+                            <QrcodeVue
+                              :value="format.bech32.pub"
+                              :size="qrcode.size"
+                              :level="qrcode.level"
+                              :render-as="qrcode.renderAs"
+                              :margin="qrcode.margin"
+                              :background="qrcode.background"
+                              :foreground="qrcode.foreground"
+                            />
+                          </v-card-item>
+                        </v-card>
                       </v-col>
                     </v-row>
                     <v-row no-gutters>
@@ -211,7 +235,7 @@
                           size="x-large"
                           rounded="xl"
                           variant="tonal"
-                          @click.prevent="cleanHexFormat"
+                          @click.prevent="cleanBech32Format"
                         >
                           Close
                         </v-btn>
@@ -236,59 +260,12 @@
 <script lang="ts">
 import QrcodeVue from 'qrcode.vue'
 
-// https://stackoverflow.com/questions/41139763/how-to-declare-a-fixed-length-array-in-typescript#41140074
-type ArrayLengthMutationKeys = 'splice' | 'push' | 'pop' | 'shift' |  'unshift'
-type FixedLengthArray<T, L extends number, TObj = [T, ...Array<T>]> =
-  Pick<TObj, Exclude<keyof TObj, ArrayLengthMutationKeys>>
-  & {
-    readonly length: L 
-    [ I : number ] : T
-    [Symbol.iterator]: () => IterableIterator<T>   
-  }
-
-interface Format {
-  prv: string,
-  pub: string,
-  overlay: boolean
-}
-
-interface Formats {
-  hex: Format
-  bech32: Format
-}
-
-interface QrcodeOptions {
-  size: number
-  level: string
-  renderAs: string
-  margin: number
-  background: string
-  foreground: string
-}
-
-interface ErrorOptions {
-  name: string
-  message: string
-}
-
-interface Data {
-  version: string
-  passphrase: string
-  seedWords: FixedLengthArray<string, 12>
-  isValid: boolean
-  isFilled: boolean
-  format: Formats
-  qrcode: QrcodeOptions
-  dialog: boolean
-  error: ErrorOptions
-}
-
 export default {
   components: {
     QrcodeVue
   },
   data () {
-    const __data__: Data = {
+    return {
       version: '',    
       passphrase: '',
       seedWords: ['', '', '', '', '', '', '', '', '', '', '', ''],
@@ -308,10 +285,11 @@ export default {
       },
       qrcode: {
         size: 400,
-        level: 'H',
+        level: ('H' as any),
         margin: 3,
         background: '#ffffff',
         foreground: '#000000',
+        renderAs: ('svg' as any)
       },
       dialog: false,
       error: { 
@@ -319,7 +297,6 @@ export default {
         message: ''
       }
     }
-    return __data__
   },
   onBeforeMount () {
     this.reset()
@@ -336,30 +313,30 @@ export default {
    *   - nip06:create:keys:bech32 --> create private and public keys in bech32 format
    */
   async created () {
-    window.$api.onSuccess('window:log', (_, value) => {
+    window.api.onSuccess('window:log', (_: any, value: any) => {
       console.log(value)
     })
 
-    window.$api.onSuccess('nip06:get:version', (_, value) => {
+    window.api.onSuccess('nip06:get:version', (_: any, value: any) => {
       this.$nextTick(() => {
         this.version = value
       })
     })
 
-    window.$api.onSuccess('nip06:generate:seed', (_, value) => { 
+    window.api.onSuccess('nip06:generate:seed', (_: any, value: any) => { 
       this.$nextTick(async () => {
         this.fillMnemonic(value)
-        await window.$api.invoke('nip06:validate:seed', value)
+        await window.api.invoke('nip06:validate:seed', value)
       })
     })
 
-    window.$api.onSuccess('nip06:validate:seed', (_, value) => {
+    window.api.onSuccess('nip06:validate:seed', (_: any, value: any) => {
       this.$nextTick(() => {
         this.isValid = value
       })
     })
 
-    window.$api.onSuccess('nip06:create:keys:hex', (_, value) => {
+    window.api.onSuccess('nip06:create:keys:hex', (_: any, value: any) => {
       this.$nextTick(() => {
         this.format.hex.prv = value.prv
         this.format.hex.pub = value.pub
@@ -367,7 +344,7 @@ export default {
       })
     })
 
-    window.$api.onSuccess('nip06:create:keys:bech32', (_, value) => {
+    window.api.onSuccess('nip06:create:keys:bech32', (_: any, value: any) => {
       this.$nextTick(() => {
         this.format.bech32.prv = value.prv
         this.format.bech32.pub = value.pub
@@ -375,13 +352,13 @@ export default {
       })
     })
     
-    window.$api.onError('nip06:get:version', this.openDialog)
-    window.$api.onError('nip06:generate:seed', this.openDialog)
-    window.$api.onError('nip06:validate:seed', this.openDialog)
-    window.$api.onError('nip06:create:keys:hex', this.openDialog)
-    window.$api.onError('nip06:create:keys:bech32', this.openDialog)
+    window.api.onError('nip06:get:version', this.openDialog)
+    window.api.onError('nip06:generate:seed', this.openDialog)
+    window.api.onError('nip06:validate:seed', this.openDialog)
+    window.api.onError('nip06:create:keys:hex', this.openDialog)
+    window.api.onError('nip06:create:keys:bech32', this.openDialog)
 
-    await window.$api.invoke('nip06:get:version')
+    await window.api.invoke('nip06:get:version')
   },
   methods: {
     /*
@@ -402,7 +379,7 @@ export default {
      * @function openDialog
      * populate data and open dialog
      */
-    openDialog (_, error) {
+    openDialog (_: any, error: any) {
       this.$nextTick(() => {
         this.error.name = error.name
         this.error.message = error.message
@@ -426,7 +403,7 @@ export default {
      * inside of electron isolated process
      */
     async generateRandomSeed () {
-      await window.$api.invoke('nip06:generate:seed')
+      await window.api.invoke('nip06:generate:seed')
     },
     /*
      * @function fillMnemonic
@@ -448,7 +425,7 @@ export default {
       const newMnemonic = event.clipboardData?.getData('text')
       if (newMnemonic) {
         this.fillMnemonic(newMnemonic)
-        await window.$api.invoke('nip06:validate:seed', newMnemonic)
+        await window.api.invoke('nip06:validate:seed', newMnemonic)
       }
     },
     /*
@@ -456,7 +433,7 @@ export default {
      * Create a private/public key pair in hex format from seed words (and passphrase)
      */
     async createHexFormat () {
-      await window.$api.invoke('nip06:create:keys:hex', {
+      await window.api.invoke('nip06:create:keys:hex', {
         mnemonic: this.seedWords.join(' ').trim(),
         passphrase: this.passphrase
       })
@@ -475,7 +452,7 @@ export default {
      * Create a private/public key pair in hex format from seed words (and passphrase)
      */
     async createBech32Format () {
-      await window.$api.invoke('nip06:create:keys:bech32', {
+      await window.api.invoke('nip06:create:keys:bech32', {
         mnemonic: this.seedWords.join(' ').trim(),
         passphrase: this.passphrase
       })

@@ -11,7 +11,8 @@
     "esModuleInterop": true,
     "lib": ["ESNext", "DOM"],
     "skipLibCheck": true,
-    "noEmit": true
+    "noEmit": true,
+    "typeRoots": ["./node_modules/qrcode.vue/dist/index.d.ts", "./node_modules/qrcode.vue/dist/qrcodegen.d.ts", "./src/types"]
   },
   "include": ["src"],
   "references": [

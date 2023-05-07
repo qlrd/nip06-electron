@@ -97,7 +97,7 @@ ipcRenderer.on('main-process-message', (_event, ...args) => {
   console.log('[Receive Main-process message]:', ...args)
 })
 
-contextBridge.exposeInMainWorld('$api', {
+contextBridge.exposeInMainWorld('api', {
   async invoke (channel: string, arg: any) {
     await ipcRenderer.invoke(channel, arg)
   },
