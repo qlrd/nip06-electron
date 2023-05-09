@@ -39,15 +39,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: List generated Files (Linux or MacOS)
-        if: ${{ runner.os == 'Linux' || runner.os == 'macOS' }}
-        run: ls -la release/
-
-      - name: List generated Files (Windows)
-        if: ${{ runner.os == 'Windows' }}
-        shell: pwsh
-        run: ls release
-      
       - name: Get version (Linux)
         if: ${{ runner.os == 'Linux' || runner.os == 'macOS' }}
         id: unix-version
@@ -67,6 +58,15 @@ jobs:
           echo "app-version=$app_version" | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
           echo "app-name=$app_name" | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
 
+      - name: List generated Files (Linux or MacOS)
+        if: ${{ runner.os == 'Linux' || runner.os == 'macOS' }}
+        run: ls -la release/${{ steps.unix-version.outputs.app-version }}
+
+      - name: List generated Files (Windows)
+        if: ${{ runner.os == 'Windows' }}
+        shell: pwsh
+        run: ls release\${{ steps.win-version.outputs.app-version }}
+
       - name: Sha256sum Release Files (AppImage) 
         if: ${{ runner.os == 'Linux' }}
         uses: qlrd/sha256sum-action@v2
@@ -80,7 +80,7 @@ jobs:
         uses: qlrd/sha256sum-action@v2
         with:
           working-directory: release/${{ steps.unix-version.outputs.app-version }}
-          file: ${{ steps.unix-version.outputs.app-name }}-${{ steps.unix-version.outputs.app-version }}_amd64.snap
+          file: ${{ steps.unix-version.outputs.app-name }}-${{ steps.unix-version.outputs.app-version }}.snap
           ext: 'sha25.txt'
 
       - name: Sha256sum Release Files (Dmg) 
@@ -113,10 +113,10 @@ jobs:
         if: ${{ runner.os == 'Linux' }}
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ runner.os }}-${{ steps.unix-version.outputs.app-name}}-v${{ steps.unix-version.outputs.app-version }}_amd64.snap 
+          name: ${{ runner.os }}-${{ steps.unix-version.outputs.app-name}}-v${{ steps.unix-version.outputs.app-version }}.snap 
           path: |
-            release/${{ steps.unix-version.outputs.app-version }}/${{ steps.unix-version.outputs.app-name }}-${{ steps.unix-version.outputs.app-version }}_amd64.snap 
-            release/${{ steps.unix-version.outputs.app-version }}/${{ steps.unix-version.outputs.app-name }}-${{ steps.unix-version.outputs.app-version }}_amd64.snap.sha256.txt
+            release/${{ steps.unix-version.outputs.app-version }}/${{ steps.unix-version.outputs.app-name }}-${{ steps.unix-version.outputs.app-version }}.snap 
+            release/${{ steps.unix-version.outputs.app-version }}/${{ steps.unix-version.outputs.app-name }}-${{ steps.unix-version.outputs.app-version }}.snap.sha256.txt
           retention-days: 5
 
       - name: Upload Artifact (Dmg)
