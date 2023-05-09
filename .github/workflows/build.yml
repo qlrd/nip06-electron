@@ -39,6 +39,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: List generated Files (Linux or MacOS)
+        if: ${{ runner.os == 'Linux' || runner.os == 'macOS' }}
+        run: ls -la release/
+
+      - name: List generated Files (Windows)
+        if: ${{ runner.os == 'Windows' }}
+        shell: pwsh
+        run: ls release
+      
       - name: Get version (Linux)
         if: ${{ runner.os == 'Linux' || runner.os == 'macOS' }}
         id: unix-version
