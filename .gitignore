@@ -31,3 +31,6 @@ yarn.lock
 
 # backup
 *.bkp
+
+# Signature certificates
+certificates/

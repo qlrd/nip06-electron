@@ -21,7 +21,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
-
+    
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -39,9 +39,93 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload Artifact
+      - name: Get version (Linux)
+        if: ${{ runner.os == 'Linux' || runner.os == 'macOS' }}
+        id: unix-version
+        run: | 
+          APP_NAME=`node -e "console.log(require('./package.json').name)"`
+          APP_VERSION=`node -e "console.log(require('./package.json').version)"`
+          echo "app-version=$APP_VERSION" >> $GITHUB_OUTPUT
+          echo "app-name=$APP_NAME" >> $GITHUB_OUTPUT
+
+      - name: Get version (Windows)
+        if: ${{ runner.os == 'Windows' }}
+        id: win-version
+        shell: pwsh
+        run: |
+          $app_name=`node -e "console.log(require('./package.json').name)"`
+          $app_version = node -e "console.log(require('./package.json').version)"
+          echo "app-version=$app_version" | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
+          echo "app-name=$app_name" | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Sha256sum Release Files (AppImage) 
+        if: ${{ runner.os == 'Linux' }}
+        uses: qlrd/sha256sum-action@v1.0.0
+        with:
+          working-directory: release/${{ steps.unix-version.outputs.app-version }}
+          file: ${{ steps.unix-version.outputs.app-name }}-${{ steps.unix-version.outputs.app-version }}.AppImage
+          ext: 'sha256.txt'
+
+      - name: Sha256sum Release Files (Snap) 
+        if: ${{ runner.os == 'Linux' }}
+        uses: qlrd/sha256sum-action@v1.0.0
+        with:
+          working-directory: release/${{ steps.unix-version.outputs.app-version }}
+          file: ${{ steps.unix-version.outputs.app-name }}-${{ steps.unix-version.outputs.app-version }}_amd64.snap
+          ext: 'sha25.txt'
+
+      - name: Sha256sum Release Files (Dmg) 
+        if: ${{ runner.os == 'macOS' }}
+        uses: qlrd/sha256sum-action@v1.0.0
+        with:
+          working-directory: release/${{ steps.unix-version.outputs.app-version }}
+          file: ${{ steps.unix-version.outputs.app-name }}-${{ steps.unix-version.outputs.app-version }}.dmg
+          ext: 'sha256.txt'
+
+      - name: Sha256sum Release Files (Nsis) 
+        if: ${{ runner.os == 'Windows' }}
+        uses: qlrd/sha256sum-action@v1.0.0
+        with:
+          working-directory: release/${{ steps.win-version.outputs.app-version }}
+          file: ${{ steps.win-version.outputs.app-name }}-${{ steps.win-version.outputs.app-version }}.exe
+          ext: 'sha256.txt'
+
+      - name: Upload Artifact (AppImage)
+        if: ${{ runner.os == 'Linux' }}
         uses: actions/upload-artifact@v3
         with:
-          name: release_on_${{ matrix. os }}
-          path: release/
+          name: ${{ runner.os }}-${{ steps.unix-version.outputs.app-name}}-v${{ steps.unix-version.outputs.app-version }}.AppImage 
+          path: |
+            release/${{ steps.unix-version.outputs.app-version }}/${{ steps.unix-version.outputs.app-name }}-${{ steps.unix-version.outputs.app-version }}.AppImage 
+            release/${{ steps.unix-version.outputs.app-version }}/${{ steps.unix-version.outputs.app-name }}-${{ steps.unix-version.outputs.app-version }}.AppImage.sha256.txt
+          retention-days: 5
+
+      - name: Upload Artifact (Snap)
+        if: ${{ runner.os == 'Linux' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ runner.os }}-${{ steps.unix-version.outputs.app-name}}-v${{ steps.unix-version.outputs.app-version }}_amd64.snap 
+          path: |
+            release/${{ steps.unix-version.outputs.app-version }}/${{ steps.unix-version.outputs.app-name }}-${{ steps.unix-version.outputs.app-version }}_amd64.snap 
+            release/${{ steps.unix-version.outputs.app-version }}/${{ steps.unix-version.outputs.app-name }}-${{ steps.unix-version.outputs.app-version }}_amd64.snap.sha256.txt
+          retention-days: 5
+
+      - name: Upload Artifact (Dmg)
+        if: ${{ runner.os == 'macOS' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ runner.os }}-${{ steps.unix-version.outputs.app-name}}-v${{ steps.unix-version.outputs.app-version }}.dmg 
+          path: |
+            release/${{ steps.unix-version.outputs.app-version }}/${{ steps.unix-version.outputs.app-name }}-${{ steps.unix-version.outputs.app-version }}.dmg 
+            release/${{ steps.unix-version.outputs.app-version }}/${{ steps.unix-version.outputs.app-name }}-${{ steps.unix-version.outputs.app-version }}.dmg.sha256.txt
+          retention-days: 5
+
+      - name: Upload Artifact (NSIS)
+        if: ${{ runner.os == 'Windows' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ runner.os }}-${{ steps.win-version.outputs.app-name}}-v${{ steps.win-version.outputs.app-version }}.exe
+          path: |
+            release/${{ steps.win-version.outputs.app-version }}/${{ steps.win-version.outputs.app-name }}-${{ steps.win-version.outputs.app-version }}.exe 
+            release/${{ steps.win-version.outputs.app-version }}/${{ steps.win-version.outputs.app-name }}-${{ steps.win-version.outputs.app-version }}.exe.sha256.txt
           retention-days: 5

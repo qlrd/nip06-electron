@@ -3,8 +3,10 @@
  */
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "YourAppID",
+  "appId": "selfcustody.nip06-electron.org",
   "asar": true,
+  "build": {
+  },
   "directories": {
     "output": "release/${version}"
   },
@@ -13,10 +15,11 @@
     "dist"
   ],
   "mac": {
-    "artifactName": "${productName}_${version}.${ext}",
+    "artifactName": "${productName}-${version}.${ext}",
+    "category": "public.app-category.utilities",
     "target": [
       "dmg"
-    ]
+    ],
   },
   "win": {
     "target": [
@@ -27,12 +30,20 @@
         ]
       }
     ],
-    "artifactName": "${productName}_${version}.${ext}"
+    "artifactName": "${productName}-${version}.${ext}"
   },
   "nsis": {
     "oneClick": false,
     "perMachine": false,
     "allowToChangeInstallationDirectory": true,
     "deleteAppDataOnUninstall": false
+  },
+  "linux": { 
+    "target": [
+      "AppImage",
+      "snap"
+    ],
+    "synopsis": "Electron tool to create NIP06 credentials",
+    "category":"Utility"
   }
 }
