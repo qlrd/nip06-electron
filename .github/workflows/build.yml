@@ -60,7 +60,7 @@ jobs:
 
       - name: Sha256sum Release Files (AppImage) 
         if: ${{ runner.os == 'Linux' }}
-        uses: qlrd/sha256sum-action@v1.0.0
+        uses: qlrd/sha256sum-action@v2
         with:
           working-directory: release/${{ steps.unix-version.outputs.app-version }}
           file: ${{ steps.unix-version.outputs.app-name }}-${{ steps.unix-version.outputs.app-version }}.AppImage
@@ -68,7 +68,7 @@ jobs:
 
       - name: Sha256sum Release Files (Snap) 
         if: ${{ runner.os == 'Linux' }}
-        uses: qlrd/sha256sum-action@v1.0.0
+        uses: qlrd/sha256sum-action@v2
         with:
           working-directory: release/${{ steps.unix-version.outputs.app-version }}
           file: ${{ steps.unix-version.outputs.app-name }}-${{ steps.unix-version.outputs.app-version }}_amd64.snap
@@ -76,7 +76,7 @@ jobs:
 
       - name: Sha256sum Release Files (Dmg) 
         if: ${{ runner.os == 'macOS' }}
-        uses: qlrd/sha256sum-action@v1.0.0
+        uses: qlrd/sha256sum-action@v2
         with:
           working-directory: release/${{ steps.unix-version.outputs.app-version }}
           file: ${{ steps.unix-version.outputs.app-name }}-${{ steps.unix-version.outputs.app-version }}.dmg
@@ -84,7 +84,7 @@ jobs:
 
       - name: Sha256sum Release Files (Nsis) 
         if: ${{ runner.os == 'Windows' }}
-        uses: qlrd/sha256sum-action@v1.0.0
+        uses: qlrd/sha256sum-action@v2
         with:
           working-directory: release/${{ steps.win-version.outputs.app-version }}
           file: ${{ steps.win-version.outputs.app-name }}-${{ steps.win-version.outputs.app-version }}.exe

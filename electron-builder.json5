@@ -37,6 +37,7 @@
     "deleteAppDataOnUninstall": false
   },
   "linux": { 
+    "artifactName": "${productName}-${version}.${ext}",
     "target": [
       "AppImage",
       "snap"
