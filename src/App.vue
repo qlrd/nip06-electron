@@ -30,6 +30,7 @@
         <v-btn
           @click.prevent="generateRandomSeed"
           variant="tonal"
+          class="ma-2"
         >
           Generate random mnemonic
         </v-btn>
@@ -37,6 +38,7 @@
           v-if="isFilled"
           @click.prevent="reset"
           variant="tonal"
+          class="ma-2"
         >
           Reset
         </v-btn>
