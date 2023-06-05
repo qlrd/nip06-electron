@@ -21,7 +21,6 @@ const debug = createDebug('nip06:main')
 // │ └── index.html    > Electron-Renderer
 //
 
-process.env.ELECTRON_NODE_INTEGRATION = process.env.ELECTRON
 process.env.DIST_ELECTRON = join(__dirname, '..')
 process.env.DIST = join(process.env.DIST_ELECTRON, '../dist')
 process.env.PUBLIC = process.env.VITE_DEV_SERVER_URL
@@ -33,7 +32,6 @@ debug('Application environment')
 debug(`  DIST_ELECTRON            : ${process.env.DIST_ELECTRON}`)
 debug(`  DIST                     : ${process.env.DIST}`)
 debug(`  PUBLIC                   : ${process.env.PUBLIC}`)
-debug(`  ELECTRON_NODE_INTEGRATION: ${process.env.ELECTRON_NODE_INTEGRATION || false}`)
 
 
 // Disable GPU Acceleration for Windows 7
