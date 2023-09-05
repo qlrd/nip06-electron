@@ -4,7 +4,8 @@ import { join } from 'node:path'
 import  createDebug from 'debug'
 import { version, description } from '../../package.json'
 import convert from 'bech32-converting'
-import { getPublicKey, nip06 } from 'nostr-tools'
+import { getPublicKey, nip06, nip19 } from 'nostr-tools'
+import { createHmac } from 'crypto'
 
 const PUBLIC_KEY_PREFIX = 'npub'
 const SECRET_KEY_PREFIX = 'nsec'
@@ -190,30 +191,34 @@ ipcMain.handle('nip06:validate:seed', (_, words) => {
   }
 })
 
-debug('  nip06:create:keys:hex')
-ipcMain.handle('nip06:create:keys:hex', (_, data) => { 
+debug('  nip06:create:keys')
+ipcMain.handle('nip06:create:keys', (_, data) => { 
   try {
-    logger('nip06:create:keys:hex', 'Creating hex keys from seed words')
+    logger('nip06:create:keys', 'Creating npub and encrypted nsec keys from seed words, passphrase and password')
     const prv = nip06.privateKeyFromSeedWords(data.mnemonic, data.passphrase)
     const pub = getPublicKey(prv)
-    win.webContents.send('nip06:create:keys:hex:success', {
-      prv: prv,
-      pub: pub
+    const encrypted = createHmac('sha256', data.password).update(prv).digest('hex')
+    const nsec = nip19.nsecEncode(encrypted)
+    win.webContents.send('nip06:create:keys:success', {
+      prv: nsec,
+      pub: convert(PUBLIC_KEY_PREFIX).toBech32(pub)
     })
-    logger('nip06:create:keys:hex', 'Hex key pair created')
+    logger('nip06:create:keys', 'Key pair created')
   } catch (error) {
-    logger('nip06:create:keys:hex', error)
-    win.webContents.send('nip06:create:keys:hex:error', error)
+    logger('nip06:create:keys', error)
+    win.webContents.send('nip06:create:keys:error', error)
   }
 })
 
+/*
 debug('  nip06:create:keys:bech32')
 ipcMain.handle('nip06:create:keys:bech32', (_, data) => { 
   try {
     logger('nip06:create:keys:bech32', 'Creating bech32 keys from seed words') 
     const prv = nip06.privateKeyFromSeedWords(data.mnemonic, data.passphrase)
     const pub = getPublicKey(prv)
-    const bech32prv = convert(SECRET_KEY_PREFIX).toBech32(prv)
+    const nsec = nip19.nsecEncode(prv)
+    const bech32prv = convert(SECRET_KEY_PREFIX).toBech32(nsec)
     const bech32pub = convert(PUBLIC_KEY_PREFIX).toBech32(pub)
     win.webContents.send('nip06:create:keys:bech32:success', {
       prv: bech32prv,
@@ -225,6 +230,7 @@ ipcMain.handle('nip06:create:keys:bech32', (_, data) => {
     win.webContents.send('nip06:create:keys:bech32:error', error)
   }
 })
+*/
 
 // New window example arg: new windows url
 /*

@@ -1,6 +1,6 @@
 {
   "name": "nip06-electron",
-  "version": "0.0.1-alpha-2",
+  "version": "0.0.1-alpha-3",
   "main": "dist-electron/main/index.js",
   "description": "NIP06 | electron",
   "author": "qlrd <106913782+qlrd@users.noreply.github.com>",

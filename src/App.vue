@@ -68,7 +68,15 @@
               <v-text-field
                 v-model="passphrase"
                 type="password"
-                label="Passphrase"
+                label="13th word (passphrase)"
+                class="pa-1"
+              />
+            </v-col>
+            <v-col cols="12" sm="12">
+              <v-text-field
+                v-model="password"
+                type="password"
+                label="Encrypt with password (NIP-19)"
                 required
                 class="pa-1"
               />
@@ -79,15 +87,15 @@
       <v-card-item v-if="isValid">
         <v-container>
           <v-row no-gutters>
-            <v-col col="6" sm="6" class="pa-1">
+            <v-col class="pa-1">
               <v-btn
-                @click.prevent="createHexFormat"
+                @click.prevent="showPubAndEncryptedPrvKeys"
                 variant="tonal"
               > 
-                Hex Format
+                Show keys
               </v-btn>
               <v-overlay
-                v-model="format.hex.overlay"
+                v-model="overlay"
                 contained
                 class="align-center justify-center"
               >
@@ -99,18 +107,18 @@
                     Key Pair
                   </v-card-title>
                   <v-card-subtitle>
-                    Hex Format
+                    Encrypted private / Public keys
                   </v-card-subtitle>
                   <v-card-item align="center" justify="center">
                     <v-row no-gutters>
                       <v-col col="6" sm="6" class="pa-12">
                         <v-card variant="tonal">
                           <v-card-subtitle>
-                            Private Key
+                            Encrypted private Key
                           </v-card-subtitle>
                           <v-card-item>
                             <QrcodeVue
-                              :value="format.hex.prv"
+                              :value="prv"
                               :size="qrcode.size"
                               :level="qrcode.level"
                               :render-as="qrcode.renderAs"
@@ -128,7 +136,7 @@
                           </v-card-subtitle>
                           <v-card-item>
                             <QrcodeVue
-                              :value="format.hex.pub"
+                              :value="pub"
                               :size="qrcode.size"
                               :level="qrcode.level"
                               :render-as="qrcode.renderAs"
@@ -142,10 +150,10 @@
                     </v-row>
                     <v-row no-gutters>
                       <v-col col="12" sm="12" class="pa-2">
-                        prv key: <v-chip> {{ format.hex.prv }} </v-chip>
+                        prv key: <v-chip> {{ prv }} </v-chip>
                       </v-col>
                       <v-col col="12" sm="12" class="pa-2">
-                        pub key: <v-chip> {{ format.hex.pub }} </v-chip>
+                        pub key: <v-chip> {{ pub }} </v-chip>
                       </v-col>
                       <v-col col="12" sm="12" class="pa-2">
                         <v-btn
@@ -161,89 +169,6 @@
                   </v-card-item>
                   <v-card-actions align="center">
                   </v-card-actions>
-                </v-card>
-              </v-overlay>
-            </v-col>
-            <v-col col="6" sm="6" class="pa-1">  
-              <v-btn
-                @click.prevent="createBech32Format"
-                variant="tonal"
-              > 
-                Bech32 Format
-              </v-btn>
-              <v-overlay
-                v-model="format.bech32.overlay"
-                contained
-                class="align-center justify-center"
-              > 
-                <v-card 
-                  color="#952175"
-                  theme="dark"
-                >
-                  <v-card-title>
-                    Key Pair
-                  </v-card-title>
-                  <v-card-subtitle>
-                    Bech32 Format
-                  </v-card-subtitle>
-                  <v-card-item>
-                    <v-row no-gutters>
-                      <v-col col="6" sm="6" class="pa-12">
-                        <v-card variant="tonal">
-                          <v-card-subtitle>
-                            Private Key
-                          </v-card-subtitle>
-                          <v-card-item>
-                            <QrcodeVue
-                              :value="format.bech32.prv"
-                              :size="qrcode.size"
-                              :level="qrcode.level"
-                              :render-as="qrcode.renderAs"
-                              :margin="qrcode.margin"
-                              :background="qrcode.background"
-                              :foreground="qrcode.foreground"
-                            />
-                          </v-card-item>
-                        </v-card>
-                      </v-col>
-                      <v-col col="6" sm="6" class="pa-12">
-                        <v-card variant="tonal">
-                          <v-card-subtitle>
-                            Public Key
-                          </v-card-subtitle>
-                          <v-card-item>
-                            <QrcodeVue
-                              :value="format.bech32.pub"
-                              :size="qrcode.size"
-                              :level="qrcode.level"
-                              :render-as="qrcode.renderAs"
-                              :margin="qrcode.margin"
-                              :background="qrcode.background"
-                              :foreground="qrcode.foreground"
-                            />
-                          </v-card-item>
-                        </v-card>
-                      </v-col>
-                    </v-row>
-                    <v-row no-gutters>
-                      <v-col col="12" sm="12" class="pa-2">
-                        prv key: <v-chip> {{ format.bech32.prv }} </v-chip>
-                      </v-col>
-                      <v-col col="12" sm="12" class="pa-2">
-                        pub key: <v-chip> {{ format.bech32.pub }} </v-chip>
-                      </v-col>
-                      <v-col col="12" sm="12" class="pa-2">
-                        <v-btn
-                          size="x-large"
-                          rounded="xl"
-                          variant="tonal"
-                          @click.prevent="cleanBech32Format"
-                        >
-                          Close
-                        </v-btn>
-                      </v-col>
-                    </v-row>
-                  </v-card-item>
                 </v-card>
               </v-overlay>
             </v-col>
@@ -269,24 +194,16 @@ export default {
   data () {
     return {
       version: '',    
+      password: '',
       passphrase: '',
       seedWords: ['', '', '', '', '', '', '', '', '', '', '', ''],
       isValid: false,
       isFilled: false,
-      format: {
-        hex: {
-          prv: '',
-          pub: '',
-          overlay: false
-        },
-        bech32: {
-          prv: '',
-          pub: '',
-          overlay: false
-        },
-      },
+      prv: '',
+      pub: '',
+      overlay: false,
       qrcode: {
-        size: 400,
+        size: 320,
         level: ('H' as any),
         margin: 3,
         background: '#ffffff',
@@ -338,28 +255,19 @@ export default {
       })
     })
 
-    window.api.onSuccess('nip06:create:keys:hex', (_: any, value: any) => {
+    window.api.onSuccess('nip06:create:keys', (_: any, value: any) => {
       this.$nextTick(() => {
-        this.format.hex.prv = value.prv
-        this.format.hex.pub = value.pub
-        this.format.hex.overlay = true
-      })
-    })
-
-    window.api.onSuccess('nip06:create:keys:bech32', (_: any, value: any) => {
-      this.$nextTick(() => {
-        this.format.bech32.prv = value.prv
-        this.format.bech32.pub = value.pub
-        this.format.bech32.overlay = true
+        this.prv = value.prv
+        this.pub = value.pub
+        this.overlay = true
       })
     })
     
     window.api.onError('nip06:get:version', this.openDialog)
     window.api.onError('nip06:generate:seed', this.openDialog)
     window.api.onError('nip06:validate:seed', this.openDialog)
-    window.api.onError('nip06:create:keys:hex', this.openDialog)
-    window.api.onError('nip06:create:keys:bech32', this.openDialog)
-
+    window.api.onError('nip06:create:keys', this.openDialog)
+    
     await window.api.invoke('nip06:get:version')
   },
   methods: {
@@ -371,11 +279,11 @@ export default {
       this.isValid = false
       this.isFilled = false
       this.seedWords = ['', '', '', '', '', '', '', '', '', '', '', ''],
+      this.password = ''
       this.passphrase = ''
-      this.format.hex.prv = ''
-      this.format.hex.pub = ''
-      this.format.bech32.prv = ''
-      this.format.bech32.pub = ''
+      this.prv = ''
+      this.pub = ''
+      this.overlay = false
     },
     /*
      * @function openDialog
@@ -434,10 +342,11 @@ export default {
      * @function createHexFormat
      * Create a private/public key pair in hex format from seed words (and passphrase)
      */
-    async createHexFormat () {
-      await window.api.invoke('nip06:create:keys:hex', {
+    async showPubAndEncryptedPrvKeys () {
+      await window.api.invoke('nip06:create:keys', {
         mnemonic: this.seedWords.join(' ').trim(),
-        passphrase: this.passphrase
+        passphrase: this.passphrase,
+        password: this.password
       })
     },
     /*
@@ -445,9 +354,9 @@ export default {
      * Cleans the private/public key pair in hex format from seed words (and passphrase)
      */
     cleanHexFormat () {
-      this.format.hex.prv = ''
-      this.format.hex.pub = ''
-      this.format.hex.overlay = false
+      this.prv = ''
+      this.pub = ''
+      this.overlay = false
     },
     /*
      * @function createBech32Format
@@ -464,9 +373,9 @@ export default {
      * Cleans the private/public key pair in hex format from seed words (and passphrase)
      */
     cleanBech32Format () {
-      this.format.bech32.prv = ''
-      this.format.bech32.pub = ''
-      this.format.bech32.overlay = false
+      this.prv = ''
+      this.pub = ''
+      this.overlay = false
     },
   }
 }
