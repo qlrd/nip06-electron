@@ -4,11 +4,20 @@ import { join } from 'node:path'
 import  createDebug from 'debug'
 import { version, description } from '../../package.json'
 import convert from 'bech32-converting'
-import { getPublicKey, nip06, nip19 } from 'nostr-tools'
-import { createHmac } from 'crypto'
+import { getPublicKey, nip06 } from 'nostr-tools'
+
+// See https://github.com/mikedilger/nips/blob/nip-nn-key-export/49.md#encrypting-a-private-key
+import { randomBytes } from 'crypto'
+import { spawn } from 'child_process'
+import { StartLoggingOptions } from 'electron/common'
 
 const PUBLIC_KEY_PREFIX = 'npub'
-const SECRET_KEY_PREFIX = 'nsec'
+// const SECRET_KEY_PREFIX = 'nsec'
+const ENCRYPTED_KEY_PREFIX = 'ncrypt'
+const KEY_SECURITY_KEY = 0x02
+const SALT_LENGTH = 16
+const NONCE_LENGTH = 24
+
 const debug = createDebug('nip06:main')
 
 // The built directory structure
@@ -52,7 +61,6 @@ if (!app.requestSingleInstanceLock()) {
   app.quit()
   process.exit(0)
 }
-
 // Remove electron security warnings
 // This warning only shows in development mode
 // Read more on https://www.electronjs.org/docs/latest/tutorial/security
@@ -64,6 +72,121 @@ function logger (channel: string, msg: any): void {
   debug(__msg__)
   win.webContents.send('window:log:success', __msg__)
 }
+
+
+// Encrypting a private key
+// The private key encryption process is as follows:
+//
+// PRIVATE_KEY = User's private (secret) secpk256 key as 32 raw bytes (not hex or bech32 encoded!)
+// KEY_SECURITY_BYTE = one of:
+//   - 0x00 - if the key has been known to have been handled insecurely (stored unencrypted, cut and paste unencrypted, etc)
+//   - 0x01 - if the key has NOT been known to have been handled insecurely (stored unencrypted, cut and paste unencrypted, etc)
+//   - 0x02 - if the client does not track this datac
+// ASSOCIATED_DATA = KEY_SECURITY_BYTE
+// NONCE = 24 byte nonce generated with the help of XChaCha20-Poly1305 (use that algorithm's nonce generator)
+// CIPHERTEXT = XChaCha20-Poly1305( plaintext=PRIVATE_KEY, associated_data=ASSOCIATED_DATA, nonce=NONCE, key=SYMMETRIC_KEY )
+// VERSION_NUMBER = 0x02
+// CIPHERTEXT_CONCATENATION = concat( VERSION_NUMBER, LOG_N, SALT, NONCE, ASSOCIATED_DATA, CIPHERTEXT )
+// ENCRYPTED_PRIVATE_KEY = bech32_encode('ncryptsec', CIPHERTEXT_CONCATENATION)
+//
+// The output prior to bech32 encoding should be 91 bytes long.
+// The decryption process operates in the reverse.
+
+// ENCRIPTION
+// openssl enc \
+//    -chacha20
+//    -base64 \
+//    -salt ${salt} \
+//    -iv ${initVector}
+//    -e \ (ENCRYPT)
+//    -md ${sha512 - default} \
+//    -iter ${iterations} \
+//    -in <(echo '${myStringToEncrypt}') \
+//    -k='${password}'
+async function encryptPrivateKey (
+  prv: string,
+  password: string,
+  digest: 'sha256' | 'sha512' = 'sha512', 
+  iterations: number = 10000
+): Promise<string> {
+  return new Promise(function (resolve, reject){
+  
+    let shell: string;
+    let compileArg: string;
+    let opensslBin: string;
+  
+    if (process.platform === 'linux') {
+      shell = '/bin/bash'
+      compileArg = '-c'
+      opensslBin = 'openssl'
+    } else if (process.platform === 'darwin') {
+      shell = '/bin/zsh'
+      SVGFECompositeElementArg = '-c'
+      opensslBin = 'openssl'
+    } else if (process.platform === 'win32') {
+      shell = 'cmd'
+      opensslBin = 'openssl.exe'
+    }
+  
+    if (process.platform === 'linux' || process.platform === 'darwin') {
+      const salt = randomBytes(SALT_LENGTH)
+      const initVector = randomBytes(NONCE_LENGTH)
+      const opensslCmd = [
+        opensslBin,
+        'enc',
+        '-chacha20',
+        '-base64',
+        `-p`,
+        `-e`,
+        `-md=${digest}`,
+        `-iter=${iterations}`,
+        `-in <(echo '${prv}')`,
+        `-k='${password}'`
+      ].join(' ')
+
+      debug(opensslCmd)
+      let stdout = Buffer.alloc(0)
+      let isErr = false
+      const openssl = spawn(shell, [compileArg, opensslCmd])
+      
+      openssl.stdout.on('data', function (chunk) {
+        debug(`stdout: ${chunk}`)
+        stdout = Buffer.concat([stdout, chunk])
+      })
+
+      openssl.stderr.on('data', function (chunk) {
+        debug(`stderr: ${chunk}`)
+        stdout = Buffer.concat([stdout, chunk])
+        isErr = true
+      })
+
+      openssl.on('error', function (error) {
+        reject(error)
+      })
+
+      openssl.on('close', function (code) {
+        if (code > 0 && !isErr) {
+          reject(new Error('Unknow error'))
+        } else if (code >0 && isErr) {
+          reject(new Error(stdout.toString()))
+        } else {
+          const allOutput = stdout.toString()
+          const salt = allOutput.exec(/salt=(.*)\n/g)[1].split('salt=')[1]
+          const encrypted = Buffer.concat([
+            Buffer.from(KEY_SECURITY_KEY.toString()),
+            Buffer.from(SALT_LENGTH.toString()),
+            salt,
+            initVector,
+            Buffer.from(KEY_SECURITY_KEY.toString()),
+            stdout
+          ]).toString('hex')
+          resolve(encrypted)
+        }
+      })
+    }
+  })
+}
+
 
 // Here, you can also use other preload
 const preload = join(__dirname, '../preload/index.js')
@@ -92,7 +215,7 @@ async function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       //enableRemoteModule: process.env.ELECTRON_NODE_INTEGRATION || false
-    },
+     }
   })
 
   if (process.env.VITE_DEV_SERVER_URL) { // electron-vite-vue#298
@@ -153,9 +276,8 @@ app.on('activate', () => {
 })
 
 debug('Configuring ipcMain nip06 handlers')
-
 debug('  nip06:get:version')
-ipcMain.handle('nip06:get:version', function(_, arg) { 
+ipcMain.handle('nip06:get:version', function() { 
   try {
     logger('nip06:get:version', `version ${version}`)
     win.webContents.send('nip06:get:version:success', version)
@@ -166,7 +288,7 @@ ipcMain.handle('nip06:get:version', function(_, arg) {
 })
 
 debug('  nip06:generate:seed')
-ipcMain.handle('nip06:generate:seed', (_, arg) => {
+ipcMain.handle('nip06:generate:seed', () => {
   try {
     logger('nip06:generate:seed', 'Generating new mnemonic')
     const mnemonic = nip06.generateSeedWords()
@@ -179,7 +301,7 @@ ipcMain.handle('nip06:generate:seed', (_, arg) => {
 })
 
 debug('  nip06:validate:seed')
-ipcMain.handle('nip06:validate:seed', (_, words) => {
+ipcMain.handle('nip06:validate:seed', (_, words: string) => {
   try {
     logger('nip06:validate:seed', 'Validating words')
     const isMnemonicValid = nip06.validateWords(words)
@@ -192,15 +314,14 @@ ipcMain.handle('nip06:validate:seed', (_, words) => {
 })
 
 debug('  nip06:create:keys')
-ipcMain.handle('nip06:create:keys', (_, data) => { 
+ipcMain.handle('nip06:create:keys', async (_, data) => { 
   try {
     logger('nip06:create:keys', 'Creating npub and encrypted nsec keys from seed words, passphrase and password')
     const prv = nip06.privateKeyFromSeedWords(data.mnemonic, data.passphrase)
     const pub = getPublicKey(prv)
-    const encrypted = createHmac('sha256', data.password).update(prv).digest('hex')
-    const nsec = nip19.nsecEncode(encrypted)
+    const encrypted = await encryptPrivateKey(prv, data.password)
     win.webContents.send('nip06:create:keys:success', {
-      prv: nsec,
+      prv: convert(ENCRYPTED_KEY_PREFIX).toBech32(encrypted),
       pub: convert(PUBLIC_KEY_PREFIX).toBech32(pub)
     })
     logger('nip06:create:keys', 'Key pair created')
@@ -209,44 +330,3 @@ ipcMain.handle('nip06:create:keys', (_, data) => {
     win.webContents.send('nip06:create:keys:error', error)
   }
 })
-
-/*
-debug('  nip06:create:keys:bech32')
-ipcMain.handle('nip06:create:keys:bech32', (_, data) => { 
-  try {
-    logger('nip06:create:keys:bech32', 'Creating bech32 keys from seed words') 
-    const prv = nip06.privateKeyFromSeedWords(data.mnemonic, data.passphrase)
-    const pub = getPublicKey(prv)
-    const nsec = nip19.nsecEncode(prv)
-    const bech32prv = convert(SECRET_KEY_PREFIX).toBech32(nsec)
-    const bech32pub = convert(PUBLIC_KEY_PREFIX).toBech32(pub)
-    win.webContents.send('nip06:create:keys:bech32:success', {
-      prv: bech32prv,
-      pub: bech32pub
-    })
-    logger('nip06:create:keys:bech32', 'Bech32 key pair created')
-  } catch (error) { 
-    logger('nip06:create:keys:bech32', error)
-    win.webContents.send('nip06:create:keys:bech32:error', error)
-  }
-})
-*/
-
-// New window example arg: new windows url
-/*
-ipcMain.handle('open-win', (_, arg) => {
-  const childWindow = new BrowserWindow({
-    webPreferences: {
-      preload,
-      nodeIntegration: true,
-      contextIsolation: false,
-    },
-  })
-
-  if (process.env.VITE_DEV_SERVER_URL) {
-    childWindow.loadURL(`${url}#${arg}`)
-  } else {
-    childWindow.loadFile(indexHtml, { hash: arg })
-  }
-})
-*/
